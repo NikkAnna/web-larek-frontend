@@ -16,6 +16,10 @@ export interface IProductsData {
     preview: string | null;
     events: IEvents;
     getProduct(productId: string): IProduct;
+    getProducts(): IProduct[];
+    setProducts(products: IProduct[]): void;
+    setPreview(productId: string): void;
+    getPreview(): string | null;
 }
 
 export interface ICartData {
@@ -27,6 +31,7 @@ export interface ICartData {
     getTotalPrice(): number;
     hasProduct(productId: string): boolean;
     removeProduct(productId: string): void;
+    getProductsInCart(): IProduct[];
 }
 
 export interface IOrder {
@@ -42,6 +47,13 @@ export interface IOrder {
     checkAdress(data: Record<string, string>): boolean;
     checkPhone(data: Record<string, string>): boolean;
     checkMail(data: Record<string, string>): boolean;
+    setProducts(products: IProduct[]): void;
+    setPayment(data: TPayment): void;
+    setEmail(data: TEmail): void;
+    setPhone(data: TPhone): void;
+    setAdress(data: string): void;
+    setError(data: string): void;
+    setTotalPrice(data: number): void;
 }
 
 export type TPayment = 'online' | 'offline';
