@@ -85,10 +85,9 @@ interface IComponent<T>{
 ```
 export interface IProductsData {
     items: IProduct[];
-    preview: string | null; 
-    events: IEvents;
+    preview: string | null;
     getProduct(productId: string): IProduct;
-    getProducts(): IProduct[];
+    getProducts(): IProduct[] | undefined;
     setProducts(products: IProduct[]): void;
     setPreview(productId: string): void;
     getPreview(): string | null;
@@ -101,16 +100,17 @@ export interface IProductsData {
 
 ```
 export interface ICartData {
-    products: IProduct[];
-    events: IEvents;
+    cartProducts: IProduct[];
+    totalPrice: number;
+    getItemBasketIndex(productId: string): number | undefined;
     addProduct(product: IProduct): void;
-    clear(): void;
-    getNumberOfProducts(): number;
-    getTotalPrice(): number;
-    hasProduct(productId: string): boolean;
     removeProduct(productId: string): void;
     getProductsInCart(): IProduct[];
-    checkPriceValidation(products: IProduct[]): boolean;
+    getNumberOfProducts(): number;
+    hasProduct(productId: string): boolean;
+    getTotalPrice(): number;
+    clear(): void;
+    validateTotalPrice(): boolean;
 }
 ```
 
@@ -120,24 +120,22 @@ export interface ICartData {
 
 ```
 export interface IOrder {
-    products: IProduct[];
+    products: [];
     payment: TPayment;
     email: TEmail;
     phone: TPhone;
     address: string;
     totalPrice: number;
-    events: IEvents;
     error: string;
-    checkAdress(data: Record<string, string>): boolean;
-    checkPhone(data: Record<string, string>): boolean;
-    checkMail(data: Record<string, string>): boolean;
     setProducts(products: IProduct[]): void;
     setPayment(data: TPayment): void;
     setEmail(data: TEmail): void;
     setPhone(data: TPhone): void;
-    setAdress(data: string): void;
+    setAddress(data: string): void;
     setError(data: string): void;
     setTotalPrice(data: number): void;
+    validateContacts(): boolean;
+    validateAddress(): boolean;
 }
 ```
 
@@ -158,8 +156,10 @@ type TPhone = string;
 В полях класса находятся все элементы главной страницы. Также класс имеет метод render, унаследованный от класса Component.  
   
 Поля класса: 
-- products: HTMLElement[];
-- numberOfProductsInCart: number;
+- products: HTMLElement;
+- numberOfProductsInCart: HTMLElement;
+- events: IEvents;
+- cartButton: HTMLElement;
 
 
 #### Класс Modal
@@ -169,6 +169,7 @@ type TPhone = string;
 Поля класса:
 - modal: HTMLElement;
 - events: IEvents;
+- closeModalButton: HTMLButtonElement;
   
 Методы класса:
 - open(): void;
@@ -180,7 +181,7 @@ type TPhone = string;
 Класс также имеет метод render, наследованный от класса Component.
 
 Поля класса:
-- name: HTMLButtonElement
+- name: HTMLElement
 - image: HTMLImageElement
 - category: HTMLSpanElement
 - description: HTMLParagraphElement
@@ -189,6 +190,7 @@ type TPhone = string;
 - basketItemIndex: HTMLSpanElement
 - addToCartButton: HTMLButtonElement
 - deleteButton: HTMLButtonElement
+- galleryCardButton: HTMLButtonElement
 - events: IEvents
 
 
@@ -200,11 +202,11 @@ type TPhone = string;
 - productsContainer: HTMLElement[]
 - buttonCreateOrder: HTMLButtonElement
 - totalPrice: number
-- allowOrder: boolean
+<!-- - allowOrder: boolean -->
 - events: IEvents
 
 
-#### Класс ModalWithForm
+#### Класс ModalForm
 Класс предназначен для отображения контента модальных окон с формами (адрес, контакты покуапателя). В конструктор принимает DOM элемент темплейта модального окна, что дает возможность отрисовывать различные варианты модальных окон с формами, и экземпляр класса `EventEmitter`.  
 В конструкторе класса определяются DOM элементы, необходимые для отрисовки модального окна, также класс имеет методы: установки валидации формы для корректного отображения кнопки оформления заказа, показа ошибок валидации, изменения состояния кнопок способа оплаты (нал/ безнал).
 Класс также имеет метод render, наследованный от класса Component.
@@ -213,26 +215,25 @@ type TPhone = string;
 - onlinePaymentButton: HTMLButtonElement
 - offlinePaymentButton: HTMLButtonElement
 - form: HTMLFormElement
-- inputs: NodeListOf```<HTMLInputElement>```
 - submitButton: HTMLButtonElement
 - formError: HTMLSpanElement
 - events: IEvents;
   
 Методы класса:
-- switchPaymentButtonState(buttonName: string): void
 - setValidity(): void
 - showError(errorMessage: string): void
 - hideError(): void
 
 
-#### Класс ModalSuccessOrder
+#### Класс ModalSuccess
 Класс предназначен для отображения модального окна с надписью успешного оформления заказа и стоимостью заказа. Данный класс расширяет класс Modal. В конструктор принимает DOM элемент темплейта модального окна и экземпляр класса `EventEmitter`.  
 В конструкторе класса определяется DOM элемент, необходимый для отображения итоговой стоимости заказа.  
-Класс также имеет метод render, наследованный от класса Component, методы open и close, наследованные от класса Modal.
+Класс также имеет метод render, наследованный от класса Component.
 
 Поля класса:
-- price: HTMLParagraphElement
-- events: IEvents
+- price: number;
+- events: IEvents;
+- buttonCloseSuccessModal: HTMLButtonElement;
 
 
 ### Слой коммуникации
@@ -241,19 +242,14 @@ type TPhone = string;
 Принимает в конструктор экземпляр класса Api (интерфейс IApi) и предоставляет методы, которые реализуют взаимодействие с сервером.
 
 ```
-export interface IApi {
-    baseUrl: string;
-    get<T>(uri: string): Promise<T>;
-    post<T>(uri: string, data: object, method?: ApiPostMethods): Promise<T>;
-}
-
 
 export interface IWebLarekApi {
-	baseApi: IApi;
-	getProducts(): IProduct[];
-	getProduct(productId: string): IProduct;
-	createOrder(): void;
+	baseApi: Api;
+	getProducts(): Promise<IProduct[]>;
+	getProduct(productId: string): Promise<IProduct>;
+	createOrder(data: IOrder): Promise<IOrder>;
 }
+
 ```
 
 ## Взаимодействие компонентов
@@ -278,3 +274,7 @@ export interface IWebLarekApi {
 - `contactsForm: validated` - после валидации данных в модели, передаем информацию в отображение, разблокируем кнопку покупки товаров
 - `contactsForm: completed` - при клике на кнопку "оплатить" передаем данные пользователя в модель данных, отправляем заказ на сервер
 - `order: success` - при успешной отправке заказа на сервер, передаем в отображение отрисовку модального окна успешного заказа с итоговой стоимостью заказа
+- `modal:open`
+- `modal:close`
+- `online:selected`
+- `offline:selected`

@@ -1,5 +1,5 @@
 
-import { ApiPostMethods } from "../components/base/api";
+import { Api, ApiPostMethods } from "../components/base/api";
 import { IEvents } from "../components/base/events";
 
 export interface IProduct {
@@ -7,15 +7,18 @@ export interface IProduct {
     description: string;
     image: string;
     title: string;
-    category: string;
+    category: TCategory;
     price: number | null;
+    basketItemIndex: number;
+    isInCart: boolean;
 }
+
+export type TCategory = 'софт-скил' | 'другое' | 'дополнительное' | 'кнопка' |'хард-скил';
 
 export interface IProductsData {
     items: IProduct[];
     preview: string | null;
-    events: IEvents;
-    getProduct(productId: string): IProduct;
+    getProduct(productId: string): IProduct | undefined;
     getProducts(): IProduct[];
     setProducts(products: IProduct[]): void;
     setPreview(productId: string): void;
@@ -23,59 +26,49 @@ export interface IProductsData {
 }
 
 export interface ICartData {
-    products: IProduct[];
-    events: IEvents;
-    addProduct(product: IProduct): void;
+    cartProducts: IProduct[];
+    totalPrice: number;
+    getItemBasketIndex(productId: string): number | undefined;
+    addProduct(newProduct: IProduct): void;
     clear(): void;
     getNumberOfProducts(): number;
     getTotalPrice(): number;
     hasProduct(productId: string): boolean;
     removeProduct(productId: string): void;
     getProductsInCart(): IProduct[];
+    validateTotalPrice(): boolean;
 }
 
 export interface IOrder {
     products: IProduct[];
-    payment: TPayment;
+    payment: TPayment | undefined;
     email: TEmail;
     phone: TPhone;
     address: string;
     totalPrice: number;
-    events: IEvents;
     error: string;
-    checkPriceValidation(products: IProduct[]): boolean;
-    checkAdress(data: Record<string, string>): boolean;
-    checkPhone(data: Record<string, string>): boolean;
-    checkMail(data: Record<string, string>): boolean;
-    setProducts(products: IProduct[]): void;
-    setPayment(data: TPayment): void;
-    setEmail(data: TEmail): void;
-    setPhone(data: TPhone): void;
-    setAdress(data: string): void;
-    setError(data: string): void;
-    setTotalPrice(data: number): void;
+    // setProducts(products: IProduct[]): IProduct[];
+    setPayment(payment: TPayment): void;
+    setEmail(email: TEmail): void;
+    setPhone(phone: TPhone): void;
+    setAddress(address: string): void;
+    setError(error: string): void;
+    setTotalPrice(price: number): void;
+    validateContacts(): boolean;
+    validateAddress(): boolean;
 }
 
 export type TPayment = 'online' | 'offline';
 
-type TEmail = string;
-type TPhone = string;
+export type TEmail = string;
+export type TPhone = string;
 
-export interface IApi {
-    baseUrl: string;
-    get<T>(uri: string): Promise<T>;
-    post<T>(uri: string, data: object, method?: ApiPostMethods): Promise<T>;
-}
 
 export interface IWebLarekApi {
-	baseApi: IApi;
-	getProducts(): IProduct[];
-	getProduct(productId: string): IProduct;
-	createOrder(): void;
-}
-
-interface IComponent<T>{
-    render(data?: Partial<T>): HTMLElement;
+	baseApi: Api;
+	getProducts(): Promise<IProduct[]>;
+	getProduct(productId: string): Promise<IProduct>;
+	createOrder(data: IOrder): Promise<IOrder>;
 }
 
 
