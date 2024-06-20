@@ -40,25 +40,30 @@ export interface ICartData {
 }
 
 export interface IOrder {
-    products: IProduct[];
-    payment: TPayment | undefined;
+    items: string[];
+    payment: TPayment;
     email: TEmail;
     phone: TPhone;
     address: string;
-    totalPrice: number;
+    total: number;
+}
+
+export interface IOrderData {
+    order: IOrder | undefined;
     error: string;
-    // setProducts(products: IProduct[]): IProduct[];
+    valid: boolean;
+    setProducts(data: IProduct[]): void;
     setPayment(payment: TPayment): void;
     setEmail(email: TEmail): void;
     setPhone(phone: TPhone): void;
     setAddress(address: string): void;
     setError(error: string): void;
     setTotalPrice(price: number): void;
-    validateContacts(): boolean;
-    validateAddress(): boolean;
+    validateContacts(): void;
+    validateOrder(): void;
 }
 
-export type TPayment = 'online' | 'offline';
+export type TPayment = 'online' | 'offline' | undefined;
 
 export type TEmail = string;
 export type TPhone = string;

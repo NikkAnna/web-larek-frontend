@@ -15,7 +15,6 @@ export class CartData implements ICartData {
         this.events = events;
     }
 
-
     getItemBasketIndex(productId: string) {
         const product = this.cartProducts.find((product) => product.id === productId);
         this.basketItemIndex = this.cartProducts.indexOf(product) + 1;
@@ -73,6 +72,6 @@ export class CartData implements ICartData {
     }
 
     clear(): void {
-        this.cartProducts = [];
+        this.cartProducts.length = 0;
     }
 }

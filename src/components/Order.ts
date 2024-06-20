@@ -1,14 +1,17 @@
-import { IOrder, IProduct, TEmail, TPayment, TPhone } from "../types";
+import { IOrder, IOrderData, IProduct, TEmail, TPayment, TPhone } from "../types";
 import { IEvents } from "./base/events";
 
 
-export class Order implements IOrder {
-    products: IProduct[];
-    payment: TPayment;
-    email: TEmail;
-    phone: TPhone;
-    address: string;
-    totalPrice: number;
+
+export class Order implements IOrderData {
+    order: IOrder = {
+        items: [],
+        payment: undefined,
+        email: undefined,
+        phone: undefined,
+        address: '',
+        total: 0,
+    }
     error: string;
     valid: boolean;
     protected events: IEvents;
@@ -17,47 +20,66 @@ export class Order implements IOrder {
         this.events = events;
     }
 
-    setAddress(address: string): void {
-        this.address = address;
+    setProducts(data: IProduct[]) {
+        const productsIdArray = data.map((product) => { return product.id } )
+        this.order.items = productsIdArray
     }
 
-    setEmail(email: string): void {
-        this.email = email;
+    setAddress(address: string): void {
+        this.order.address = address;
+    }
+
+    setEmail(email: TEmail): void {
+        this.order.email = email;
     }
     
-    setPhone(phone: string): void {
-        this.phone = phone;
+    setPhone(phone: TPhone): void {
+        this.order.phone = phone;
     }
 
     setPayment(payment: TPayment): void {
-        this.payment = payment;
+        this.order.payment = payment;
     }
 
     setTotalPrice(price: number): void {
-        this.totalPrice = price;
+        this.order.total = price;
     }
 
     setError(error: string): void {
         this.error = error;
     }
 
-    validateAddress(): boolean {
-        if (!this.address) {
-            this.setError('Необходимо указать адрес');
-            return false
+    validateOrder(): void {
+        if (!this.order.address || !this.order.payment) {
+            this.setError('Необходимо указать адрес и выбрать способ оплаты');
+            this.valid = false
         } else {
-            this.events.emit('orderForm:validated');
-            return true
+            this.setError('');
+            // this.events.emit('orderForm:validated');
+            this.valid = true
         }
+        this.events.emit('orderFormValidity:changed');
     }
 
-    validateContacts(): boolean {
-        if (!this.email || !this.phone) {
-            this.setError('Необходимо заполнить все данные');
-            return false
+    validateContacts(): void {
+        if (!this.order.email || !this.order.phone) {
+            this.setError('Проверьте корректность почтового адреса и телефона');
+            this.valid = false
         } else {
-            this.events.emit('contactsForm:validated');
-            return true
+            this.setError('');
+            this.valid = true
+        }
+        this.events.emit('contactsFormValidity:changed');
+    }
+
+    clear() {
+        this.order = {
+            items: [],
+            payment: undefined,
+            email: undefined,
+            phone: undefined,
+            address: '',
+            total: 0,
         }
     }
 }

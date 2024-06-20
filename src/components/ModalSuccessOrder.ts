@@ -11,14 +11,14 @@ export class ModalSuccess extends Component<IModalSuccess> {
     protected events: IEvents;
     protected buttonCloseSuccessModal: HTMLButtonElement;
 
-    constructor(container: HTMLTemplateElement, events: IEvents) {
+    constructor(container: HTMLElement, events: IEvents) {
         super(container);
         this.events = events;
         this._price = ensureElement<HTMLParagraphElement>('.order-success__description', this.container);
         this.buttonCloseSuccessModal = ensureElement<HTMLButtonElement>('.order-success__close', this.container);
 
         this.buttonCloseSuccessModal.addEventListener('click', () => {
-            this.events.emit('modal:close')
+            this.events.emit('success:close')
         })
     }
 

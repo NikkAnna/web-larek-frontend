@@ -24,7 +24,6 @@ const cardBasketTemplate = ensureElement<HTMLTemplateElement>('#card-basket');
 const basketTemplate = ensureElement<HTMLTemplateElement>('#basket');
 const orderTemplate = ensureElement<HTMLTemplateElement>('#order');
 const contactsTemplate = ensureElement<HTMLTemplateElement>('#contacts');
-const pageWrapper = ensureElement<HTMLTemplateElement>('.page__wrapper');
 
 const api = new Api(API_URL, settings);
 const larekApi = new WebLarekApi(api, CDN_URL);
@@ -56,7 +55,7 @@ events.on('initialData:loaded', () => {
         return cardCatalog.render(product);
     });
 
-    page.render({ products: productsArray, numberOfProductsInCart: 0});
+    page.render({ products: productsArray, numberOfProductsInCart: cartData.getNumberOfProducts()});
 });
 
 events.on('product:selected', (data: { product: ProductCard}) => {
@@ -101,7 +100,7 @@ events.on('deleteButton:selected', (data: { product: ProductCard }) => {
 });
 
 events.on('cartProductsCounter:changed', () => {
-    page.render({ numberOfProductsInCart: cartData.getNumberOfProducts()});
+    page.numberOfProductsInCart = cartData.getNumberOfProducts();
 });
 
 events.on('cart:change', () => {
@@ -127,23 +126,111 @@ events.on('cart:change', () => {
     modal.open();
 });
 
+const orderForm = new ModalForm(cloneTemplate(orderTemplate), events);
 events.on('create order', () => {
-    const orderForm = new ModalForm(cloneTemplate(orderTemplate), events);
     modal.render({ content: orderForm.render({
-        products: cartData.cartProducts,
-        payment: undefined,
-        email: '',
-        phone: '',
-        address: '',
-        totalPrice: cartData.getTotalPrice(),
-        error: '',
-        })
-    });
-
+            address: '',
+            error: '',
+            valid: false,
+            })
+    
+        });
     modal.open();
 })
 
+events.on('online:selected', () => {
+    orderData.setPayment('online');
+    orderData.validateOrder();
+})
 
+events.on('offline:selected', () => {
+    orderData.setPayment('offline');
+    orderData.validateOrder();
+})
+
+events.on('address:input', (data: { field: string, value: string }) => {
+    orderData.setAddress(data.value);
+    orderData.validateOrder();
+});
+
+const contactsForm = new ModalForm(cloneTemplate(contactsTemplate), events);
+events.on('order:submit', () => {
+    modal.render({ content: contactsForm.render({
+        email: '',
+        phone: '',
+        error: '',
+        valid: false,
+        })
+
+    });
+    modal.open();
+})
+
+events.on('phone:input', (data: { field: string, value: string }) => {
+    orderData.setPhone(data.value);
+    orderData.validateContacts();
+});
+
+events.on('email:input', (data: { field: string, value: string }) => {
+    orderData.setEmail(data.value);
+    orderData.validateContacts();
+});
+
+events.on('orderFormValidity:changed', () => {
+    orderForm.valid = orderData.valid;
+    orderForm.error = orderData.error;
+});
+
+events.on('contactsFormValidity:changed', () => {
+    contactsForm.valid = orderData.valid;
+    contactsForm.error = orderData.error;
+    console.log(cartData.getProductsInCart())
+});
+
+events.on('contacts:submit', () => {
+    
+    const productsForOrder = cartData.getProductsInCart().filter((product) => { 
+        if (product.price) {
+            return product
+        }
+    })
+    orderData.setProducts(productsForOrder);
+    orderData.setTotalPrice(cartData.getTotalPrice());
+    larekApi.createOrder({
+        items: orderData.order.items,
+        payment: orderData.order.payment,
+        email: orderData.order.email,
+        phone: orderData.order.phone,
+        address: orderData.order.address,
+        total: orderData.order.total,
+    })
+    .then((res) => {
+        events.emit('order:success')
+    })
+    .catch((err) => {
+        console.log(err);
+    })
+})
+
+events.on('order:success', () => {
+    const success = new ModalSuccess(cloneTemplate(successTemplate), events);
+    modal.render({ content: success.render({
+        price: orderData.order.total,
+        })
+    });
+    modal.open();
+
+    products.items.forEach((product) => {
+        product.isInCart = false
+    })
+    cartData.clear();
+    page.numberOfProductsInCart = 0;
+
+})
+
+events.on('success:close', () => {
+    modal.close();
+})
 
 events.on('modal:open', () => {
     page.locked = true;
@@ -151,6 +238,8 @@ events.on('modal:open', () => {
 
 events.on('modal:close', () => {
     page.locked = false;
+    orderData.clear();
+    orderForm.resetPaymentButton();
 });
 
 

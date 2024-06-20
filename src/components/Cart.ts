@@ -16,7 +16,7 @@ export class Cart extends Component<ICart> {
     protected _allowOrder: boolean;
     protected events: IEvents;
 
-    constructor(container: HTMLTemplateElement, events: IEvents) {
+    constructor(container: HTMLElement, events: IEvents) {
         super(container);
 
         this.events = events;

@@ -17,7 +17,7 @@ export class ProductCard extends Component<IProduct> {
     protected events: IEvents;
     protected _isInCart: boolean;
 
-    constructor(container: HTMLTemplateElement, events: IEvents) {
+    constructor(container: HTMLElement, events: IEvents) {
         super(container);
 
         this.events = events;
