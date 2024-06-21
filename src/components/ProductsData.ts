@@ -39,7 +39,7 @@ export class ProductsData implements IProductsData {
 		return this.preview;
 	}
 
-	setIsInCart(productId: string, value: boolean) {
+	setIsInCart(productId: string, value: boolean): void {
 		const selectedProduct = this.getProduct(productId);
 		selectedProduct.isInCart = value;
 	}

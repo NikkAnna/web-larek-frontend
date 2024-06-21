@@ -5,6 +5,7 @@ import { ensureElement } from '../utils/utils';
 interface IPage {
 	products: HTMLElement[];
 	numberOfProductsInCart: number;
+	locked: boolean;
 }
 
 export class Page extends Component<IPage> implements IPage {

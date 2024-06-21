@@ -86,8 +86,6 @@ events.on('preview:changed', (data: { product: IProduct }) => {
             isInCart: data.product.isInCart,
         }),
     });
-
-    modal.open();
 });
 
 events.on('productCartButton:changed', (data: { product: ProductCard }) => {
@@ -137,8 +135,6 @@ events.on('cart:change', () => {
             allowOrder: cartData.validateTotalPrice(),
         }),
     });
-
-    modal.open();
 });
 
 events.on('create order', () => {
@@ -149,7 +145,6 @@ events.on('create order', () => {
             valid: false,
         }),
     });
-    modal.open();
 });
 
 events.on('online:selected', () => {
@@ -176,7 +171,6 @@ events.on('order:submit', () => {
             valid: false,
         }),
     });
-    modal.open();
 });
 
 events.on('phone:input', (data: { field: string; value: string }) => {
@@ -190,13 +184,13 @@ events.on('email:input', (data: { field: string; value: string }) => {
 });
 
 events.on('orderFormValidity:changed', () => {
-    orderForm.valid = orderData.valid;
-    orderForm.error = orderData.error;
+    orderForm.valid = orderData.getValid();
+    orderForm.error = orderData.getError();
 });
 
 events.on('contactsFormValidity:changed', () => {
-    contactsForm.valid = orderData.valid;
-    contactsForm.error = orderData.error;
+    contactsForm.valid = orderData.getValid();
+    contactsForm.error = orderData.getError();
 });
 
 events.on('contacts:submit', () => {
@@ -207,14 +201,15 @@ events.on('contacts:submit', () => {
     });
     orderData.setProducts(productsForOrder);
     orderData.setTotalPrice(cartData.getTotalPrice());
+    const order = orderData.getOrder();
     larekApi
         .createOrder({
-            items: orderData.order.items,
-            payment: orderData.order.payment,
-            email: orderData.order.email,
-            phone: orderData.order.phone,
-            address: orderData.order.address,
-            total: orderData.order.total,
+            items: order.items,
+            payment: order.payment,
+            email: order.email,
+            phone: order.phone,
+            address: order.address,
+            total: order.total,
         })
         .then(() => {
             events.emit('order:success');
@@ -228,10 +223,9 @@ events.on('order:success', () => {
     const modalSuccess = new ModalSuccess(cloneTemplate(successTemplate), events);
     modal.render({
         content: modalSuccess.render({
-            price: orderData.order.total,
+            price: orderData.getOrder().total,
         }),
     });
-    modal.open();
 
     productsData.getProducts().forEach((product) => {
         product.isInCart = false;

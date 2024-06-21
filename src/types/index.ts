@@ -49,15 +49,14 @@ export interface IOrder {
 }
 
 export interface IOrderData {
-	order: IOrder | undefined;
-	error: string;
-	valid: boolean;
+	getOrder(): IOrder;
 	setProducts(data: IProduct[]): void;
 	setPayment(payment: TPayment): void;
 	setEmail(email: TEmail): void;
 	setPhone(phone: TPhone): void;
 	setAddress(address: string): void;
 	setError(error: string): void;
+	setValid(valid: boolean): void;
 	setTotalPrice(price: number): void;
 	validateContacts(): void;
 	validateOrder(): void;

@@ -10,7 +10,7 @@ import {
 import { IEvents } from './base/events';
 
 export class Order implements IOrderData {
-	order: IOrder = {
+	protected order: IOrder = {
 		items: [],
 		payment: undefined,
 		email: undefined,
@@ -18,8 +18,8 @@ export class Order implements IOrderData {
 		address: '',
 		total: 0,
 	};
-	error: string;
-	valid: boolean;
+	protected error: string;
+	protected valid: boolean;
 	protected events: IEvents;
 
 	constructor(events: IEvents) {
@@ -31,6 +31,10 @@ export class Order implements IOrderData {
 			return product.id;
 		});
 		this.order.items = productsIdArray;
+	}
+
+	getOrder(): IOrder {
+		return this.order;
 	}
 
 	setAddress(address: string): void {
@@ -57,8 +61,20 @@ export class Order implements IOrderData {
 		this.error = error;
 	}
 
+	getError(): string {
+		return this.error;
+	}
+
+	setValid(valid: boolean): void {
+		this.valid = valid;
+	}
+
+	getValid(): boolean {
+		return this.valid;
+	}
+
 	validateOrder(): void {
-		this.valid = !this.order.address || !this.order.payment ? false : true;
+		this.setValid(!this.order.address || !this.order.payment ? false : true);
 		this.setError(
 			this.valid ? '' : 'Необходимо указать адрес и выбрать способ оплаты'
 		);
@@ -66,14 +82,14 @@ export class Order implements IOrderData {
 	}
 
 	validateContacts(): void {
-		this.valid = !this.order.email || !this.order.phone ? false : true;
+		this.setValid(!this.order.email || !this.order.phone ? false : true);
 		this.setError(
 			this.valid ? '' : 'Проверьте корректность почтового адреса и телефона'
 		);
 		this.events.emit('contactsFormValidity:changed');
 	}
 
-	clear() {
+	clear(): void {
 		this.order = {
 			items: [],
 			payment: undefined,

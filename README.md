@@ -91,18 +91,17 @@ export interface IProductsData {
     setProducts(products: IProduct[]): void;
     setPreview(productId: string): void;
     getPreview(): string | null;
+    setIsInCart(productId: string, value: boolean): void;
 }
 ```
 
 #### Класс CartData
-Класс отвечает за хранение данных в корзине и логику работы с этими данными.   
+Класс отвечает за хранение данных в корзине и логику работы с этими данными.
 В полях класса - массив объектов товаров, экземпляр класса `EventEmitter`. Класс имеет методы работы с данными: добавление продукта в корзину, зачистка корзины, получение количества товаров в корзине, подсчет стоимости товаров в корзине, проверка наличия товара в корзине, удаление товара из корзины, получение массива товаров, находящихся в корзине. Класс имеет метод проверки валидации корзины - если в корзине находится только бесценный товар (стоимость заказа равна нулю), то дальнейшее оформление заказа невозможно.
 
 ```
 export interface ICartData {
-    cartProducts: IProduct[];
-    totalPrice: number;
-    getItemBasketIndex(productId: string): number | undefined;
+    getItemBasketIndex(productId: string): number;
     addProduct(product: IProduct): void;
     removeProduct(productId: string): void;
     getProductsInCart(): IProduct[];
@@ -120,22 +119,20 @@ export interface ICartData {
 
 ```
 export interface IOrder {
-    products: [];
-    payment: TPayment;
-    email: TEmail;
-    phone: TPhone;
-    address: string;
-    totalPrice: number;
-    error: string;
+    getOrder(): IOrder;
     setProducts(products: IProduct[]): void;
     setPayment(data: TPayment): void;
     setEmail(data: TEmail): void;
     setPhone(data: TPhone): void;
     setAddress(data: string): void;
     setError(data: string): void;
+    getError(): string;
+    setValid(valid: boolean): void;
+    getValid(): boolean;
     setTotalPrice(data: number): void;
     validateContacts(): boolean;
     validateAddress(): boolean;
+    clear(): void;
 }
 ```
 
@@ -146,6 +143,13 @@ export type TPayment = 'online' | 'offline';
 
 type TEmail = string;
 type TPhone = string;
+
+type TCategory =
+	| 'софт-скил'
+	| 'другое'
+	| 'дополнительное'
+	| 'кнопка'
+	| 'хард-скил';
 ```
 
 
@@ -156,8 +160,9 @@ type TPhone = string;
 В полях класса находятся все элементы главной страницы. Также класс имеет метод render, унаследованный от класса Component.  
   
 Поля класса: 
-- products: HTMLElement;
-- numberOfProductsInCart: HTMLElement;
+- productsContainer: HTMLElement;
+- productsInCart: HTMLElement;
+- wrapper: HTMLElement;
 - events: IEvents;
 - cartButton: HTMLElement;
 
@@ -181,17 +186,18 @@ type TPhone = string;
 Класс также имеет метод render, наследованный от класса Component.
 
 Поля класса:
-- name: HTMLElement
-- image: HTMLImageElement
-- category: HTMLSpanElement
-- description: HTMLParagraphElement
-- price: HTMLSpanElement
-- id: string
-- basketItemIndex: HTMLSpanElement
+- _name: HTMLElement
+- _image: HTMLImageElement
+- _category: HTMLSpanElement
+- _description: HTMLParagraphElement
+- _price: HTMLSpanElement
+- prosuctId: string
+- _basketItemIndex: HTMLSpanElement
 - addToCartButton: HTMLButtonElement
 - deleteButton: HTMLButtonElement
 - galleryCardButton: HTMLButtonElement
-- events: IEvents
+- events: IEvents;
+- _isInCart: boolean;
 
 
 #### Класс Cart
@@ -199,30 +205,31 @@ type TPhone = string;
 Класс также имеет метод render, наследованный от класса Component.
 
 Поля класса:
-- productsContainer: HTMLElement[]
-- buttonCreateOrder: HTMLButtonElement
-- totalPrice: number
-<!-- - allowOrder: boolean -->
-- events: IEvents
+- _productsContainer: HTMLElement;
+- _buttonCreateOrder: HTMLButtonElement;
+- _totalPrice: HTMLSpanElement;
+- _allowOrder: boolean;
+- events: IEvents;
 
 
 #### Класс ModalForm
-Класс предназначен для отображения контента модальных окон с формами (адрес, контакты покуапателя). В конструктор принимает DOM элемент темплейта модального окна, что дает возможность отрисовывать различные варианты модальных окон с формами, и экземпляр класса `EventEmitter`.  
-В конструкторе класса определяются DOM элементы, необходимые для отрисовки модального окна, также класс имеет методы: установки валидации формы для корректного отображения кнопки оформления заказа, показа ошибок валидации, изменения состояния кнопок способа оплаты (нал/ безнал).
+Класс предназначен для отображения контента двух модальных окон с формами (адрес, контакты покуапателя). В конструктор принимает DOM элемент темплейта модального окна, что дает возможность отрисовывать различные варианты модальных окон с формами, и экземпляр класса `EventEmitter`.  
+В конструкторе класса определяются DOM элементы, необходимые для отрисовки модального окна, также класс имеет метод зачистки выбора кнопки оплаты после закрытия модального окна с оформлением заказа.
 Класс также имеет метод render, наследованный от класса Component.
 
 Поля класса:
 - onlinePaymentButton: HTMLButtonElement
 - offlinePaymentButton: HTMLButtonElement
-- form: HTMLFormElement
 - submitButton: HTMLButtonElement
 - formError: HTMLSpanElement
 - events: IEvents;
+- formName: string;
+- addressInput: HTMLInputElement;
+- phoneInput: HTMLInputElement;
+- emailInput: HTMLInputElement;
   
 Методы класса:
-- setValidity(): void
-- showError(errorMessage: string): void
-- hideError(): void
+- resetPaymentButton(): void;
 
 
 #### Класс ModalSuccess
@@ -231,7 +238,7 @@ type TPhone = string;
 Класс также имеет метод render, наследованный от класса Component.
 
 Поля класса:
-- price: number;
+- _price: HTMLParagraphElement;
 - events: IEvents;
 - buttonCloseSuccessModal: HTMLButtonElement;
 
@@ -259,22 +266,12 @@ export interface IWebLarekApi {
 - `initialData: loaded` - получаем данные с сервера при загрузке главной страницы, отрисовываем их с помощью класса отображения Page
 - `product: selected` - при клике на карточку передает в модель данных объект карточки, на которую кликнули
 - `preview: changed` - передает данные товара из модели в отображение для отрисовки превью переданной карточки
-- `cart: addProduct` - при клике на кнопку "добавить в корзину" передает в модель данных объект карточки, на которую кликнули
-- `cart: removeProduct` - при клике на кнопку "удалить из корзины" передает в модель данных объект карточки, на которую кликнули
-- `product: inСart` - модель данных передает в отображение карточку, которая добавлена в корзину, в превью этой карточки меняется отображение кнопки добавления в корзину
-- `cart: changed` - перерендеривается список товаров в корзине, на главное странице увеличивается/ уменьшается счетчик товаров в корзине
-- `cart: selected` - при нажатии на кнопку корзины получаем из модели данных список товаров в корзине и отображаем модалку с корзиной
-- `create order` - при клике на кнопку "оформить заказ" в модель передаются данные продуктов из корзины и их цена
-- `productsInOrder: completed` - после передачи товаров в корзине в модель, вызываем этот обработчик для отрисовки модалки с формой адреса и способа оплаты заказа
-- `orderForm: changed` - обработчик реагирует на изменение данных в форме и передает информацию в модель
-- `orderForm: validated` - после валидации данных в модели, передаем информацию в отображение, разблокируем кнопку перехода "далее"
-- `goToContacts` - при клике на кнопку "далее" в форме с вводом адреса и способа оплаты, передаем данные из формы в модель
-- `orderForm: completed` - после передачи данных пользователя в модель, вызываем этот обработчик для отрисовки модалки с контактной информацией покупателя
-- `contactsForm: changed` - обработчик реагирует на изменение данных в форме с контактами и передает информацию в модель
-- `contactsForm: validated` - после валидации данных в модели, передаем информацию в отображение, разблокируем кнопку покупки товаров
-- `contactsForm: completed` - при клике на кнопку "оплатить" передаем данные пользователя в модель данных, отправляем заказ на сервер
-- `order: success` - при успешной отправке заказа на сервер, передаем в отображение отрисовку модального окна успешного заказа с итоговой стоимостью заказа
-- `modal:open`
-- `modal:close`
-- `online:selected`
-- `offline:selected`
+- `productCartButton:changed` - при клике на кнопку "в корзину" или удалить из корзины" передаем данные о том, что пользователь хочет изменить состав корзины
+- `cartProductsCounter:changed` - при изменении кол-ва товаров в корзине, передаем информацию отображению и меняем счетчик товаров на главной странице
+- `deleteButton:selected` - при клике на кнопку урны в корзине передаем информацию в модель о том, что товар удалили из корзины
+- `cart: change` - при изменении кол-ва товаров в корзине перерисовываем отображение корзины
+- `create order` - при клике на кнопку "оформить заказ" отрисовываем отображение формы с вводом адреса и выбором способа оплаты
+- `orderFormValidity:changed`, `contactsFormValidity:changed` - проверяем валидацию формы при ее заполнении пользователем и меняем отображение кнопки "далее"/"оплатить" в зависимости от состояния валидации формы
+- `order:submi`t` - при клике на кнопку оформить отображаем следующую модалку с формами ввода телефона и почты
+- `contacts:submit` - собираем данные по заказу и отправляем их на сервер
+- `order:success` - при успешной отправке данных на сервер, отрисовываем модалку с успешным оформлением заказа

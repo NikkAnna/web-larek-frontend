@@ -17,9 +17,7 @@ export class WebLarekApi implements IWebLarekApi {
 	}
 
 	async getProduct(productId: string): Promise<IProduct> {
-		const product = (await this.baseApi.get(
-			`/product/${productId}`
-		)) as IProduct;
+		const product = (await this.baseApi.get(`/product/${productId}`)) as IProduct;
 		return product;
 	}
 

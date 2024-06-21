@@ -26,22 +26,14 @@ export class ModalForm extends Component<IOrderForm> {
 		super(container);
 
 		this.events = events;
-		this.onlinePaymentButton =
-			this.container.querySelector<HTMLButtonElement>('[name="card"]');
-		this.offlinePaymentButton =
-			this.container.querySelector<HTMLButtonElement>('[name="cash"]');
-		this.submitButton = this.container.querySelector<HTMLButtonElement>(
-			'button[type=submit]'
-		);
-		this.formError =
-			this.container.querySelector<HTMLSpanElement>('.form__errors');
+		this.onlinePaymentButton = this.container.querySelector<HTMLButtonElement>('[name="card"]');
+		this.offlinePaymentButton = this.container.querySelector<HTMLButtonElement>('[name="cash"]');
+		this.submitButton = this.container.querySelector<HTMLButtonElement>('button[type=submit]');
+		this.formError = this.container.querySelector<HTMLSpanElement>('.form__errors');
 		this.formName = this.container.getAttribute('name');
-		this.addressInput =
-			this.container.querySelector<HTMLInputElement>('[name="address"]');
-		this.phoneInput =
-			this.container.querySelector<HTMLInputElement>('[name="phone"]');
-		this.emailInput =
-			this.container.querySelector<HTMLInputElement>('[name="email"]');
+		this.addressInput = this.container.querySelector<HTMLInputElement>('[name="address"]');
+		this.phoneInput = this.container.querySelector<HTMLInputElement>('[name="phone"]');
+		this.emailInput = this.container.querySelector<HTMLInputElement>('[name="email"]');
 
 		this.container.addEventListener('input', (e: Event) => {
 			const target = e.target as HTMLInputElement;
@@ -92,7 +84,7 @@ export class ModalForm extends Component<IOrderForm> {
 		this.setDisabled(this.submitButton, !value);
 	}
 
-	resetPaymentButton() {
+	resetPaymentButton(): void {
 		this.onlinePaymentButton.classList.remove('button_alt-active');
 		this.onlinePaymentButton.classList.remove('button_alt-active');
 	}
